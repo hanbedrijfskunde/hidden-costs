@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Interactieve Tool: Analyse Verborgen Bedrijfskosten</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts: Inter -->
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+    />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Font Awesome for Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <style>
+      /* Custom styles to complement Tailwind */
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #f8fafc; /* slate-50 */
+      }
+      .tab-active {
+        border-bottom-color: #2563eb; /* blue-600 */
+        color: #2563eb;
+        font-weight: 600;
+      }
+      .tab-inactive {
+        border-bottom-color: transparent;
+        color: #475569; /* slate-600 */
+      }
+      .say-do-gap-card {
+        background-color: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1),
+          0 2px 4px -2px rgb(0 0 0 / 0.1);
+      }
+      .pill {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      .pill-red {
+        background-color: #fee2e2;
+        color: #b91c1c;
+      }
+      .pill-green {
+        background-color: #dcfce7;
+        color: #166534;
+      }
+
+      /* Styles for input fields */
+      textarea.analysis-input,
+      input.analysis-input {
+        width: 100%;
+        border-radius: 0.5rem;
+        border: 1px solid #cbd5e1; /* slate-300 */
+        padding: 0.75rem;
+        font-size: 0.875rem;
+        color: #334155; /* slate-700 */
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+      textarea.analysis-input:focus,
+      input.analysis-input:focus {
+        outline: none;
+        border-color: #2563eb; /* blue-600 */
+        box-shadow: 0 0 0 2px #bfdbfe; /* blue-200 */
+      }
+      .manual-content h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b; /* slate-800 */
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        border-bottom: 2px solid #e2e8f0; /* slate-200 */
+        padding-bottom: 0.5rem;
+      }
+      .manual-content h4 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #334155; /* slate-700 */
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+      }
+      .manual-content ul {
+        list-style-type: disc;
+        margin-left: 1.5rem;
+        space-y: 0.5rem;
+        color: #475569; /* slate-600 */
+      }
+      .manual-content code {
+        background-color: #e2e8f0;
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
+        font-family: monospace;
+        font-size: 0.875rem;
+      }
+    </style>
+  </head>
+  <body class="text-slate-800">
+    <!-- Main Container -->
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+      <!-- Header -->
+      <header class="text-center mb-8">
+        <h1 class="text-4xl md:text-5xl font-bold text-slate-900">
+          Het Onzichtbare Grootboek
+        </h1>
+        <p class="text-lg text-slate-600 mt-2">
+          Interactieve Tool voor de Analyse van Verborgen Bedrijfskosten
+        </p>
+      </header>
+
+      <!-- Company Input & Controls -->
+      <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+        <div
+          class="flex flex-col md:flex-row items-center justify-between gap-4"
+        >
+          <div class="w-full md:w-1/3">
+            <label
+              for="companyName"
+              class="block text-sm font-medium text-slate-700 mb-1"
+              >Te analyseren bedrijf:</label
+            >
+            <input
+              type="text"
+              id="companyName"
+              class="analysis-input"
+              placeholder="bv. Ahold Delhaize, Shell, H&M..."
+            />
+          </div>
+          <div
+            class="w-full md:w-auto flex flex-col sm:flex-row items-center justify-end space-y-2 sm:space-y-0 sm:space-x-4"
+          >
+            <button
+              onclick="loadExampleData()"
+              class="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+            >
+              <i class="fa-solid fa-file-import mr-2"></i>Laad Voorbeeld
+            </button>
+            <button
+              onclick="resetData()"
+              class="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+            >
+              <i class="fa-solid fa-trash mr-2"></i>Reset Analyse
+            </button>
+          </div>
+        </div>
+        <p class="text-xs text-slate-400 mt-2 italic">
+          Alle ingevoerde data wordt automatisch lokaal in je browser
+          opgeslagen.
+        </p>
+      </div>
+
+      <!-- Tab Navigation -->
+      <div class="mb-8 border-b border-slate-200">
+        <nav
+          class="flex flex-wrap -mb-px"
+          aria-label="Tabs"
+        >
+          <button
+            onclick="showTab('manual')"
+            id="tab-manual"
+            class="tab-active py-4 px-4 border-b-2 text-sm sm:text-base"
+          >
+            <i class="fa-solid fa-book-open mr-2"></i>Handleiding
+          </button>
+          <button
+            onclick="showTab('environmental')"
+            id="tab-environmental"
+            class="tab-inactive py-4 px-4 border-b-2 text-sm sm:text-base"
+          >
+            <i class="fa-solid fa-leaf mr-2"></i>Ecologisch
+          </button>
+          <button
+            onclick="showTab('social')"
+            id="tab-social"
+            class="tab-inactive py-4 px-4 border-b-2 text-sm sm:text-base"
+          >
+            <i class="fa-solid fa-users mr-2"></i>Sociaal
+          </button>
+          <button
+            onclick="showTab('governance')"
+            id="tab-governance"
+            class="tab-inactive py-4 px-4 border-b-2 text-sm sm:text-base"
+          >
+            <i class="fa-solid fa-landmark mr-2"></i>Bestuur (Governance)
+          </button>
+        </nav>
+      </div>
+
+      <!-- Tab Content -->
+      <main>
+        <!-- Manual Tab -->
+        <div
+          id="content-manual"
+          class="bg-white p-6 md:p-8 rounded-lg shadow-inner manual-content"
+        >
+          <h2 class="text-3xl font-bold text-slate-900 mb-4">
+            Handleiding: Analyse van Verborgen Kosten
+          </h2>
+          <p class="mb-6 text-slate-600">
+            Deze tool is ontworpen om je te helpen bij het uitvoeren van een
+            diepgaande analyse naar de verborgen ecologische en sociale kosten
+            van een beursgenoteerd bedrijf. Volg de onderstaande stappen voor
+            een gestructureerd onderzoek. Gebruik de knop "Laad Voorbeeld" om de
+            tool te vullen met de casus van Ahold Delhaize.
+          </p>
+
+          <h3>Stap 1: Kies een Bedrijf en Verzamel Basisdata</h3>
+          <p>
+            Kies een groot, beursgenoteerd bedrijf. Deze bedrijven zijn
+            verplicht om veel informatie publiek te maken. Vul de naam van het
+            bedrijf bovenaan de pagina in.
+          </p>
+          <h4>Essentiële databronnen:</h4>
+          <ul>
+            <li>
+              <strong>Jaarverslag (Annual Report):</strong> Dit is de
+              belangrijkste bron. Zoek naar de secties over 'Sustainability',
+              'Risk Management' en 'Remuneration' (beloning bestuur).
+            </li>
+            <li>
+              <strong>Duurzaamheidsverslag (Sustainability Report):</strong> Een
+              gedetailleerd verslag over ESG-prestaties. Hier vind je vaak de
+              data die je nodig hebt voor je analyse.
+            </li>
+            <li>
+              <strong>Website van het bedrijf:</strong> Zoek naar een
+              'Duurzaamheid' of 'Investor Relations' sectie.
+            </li>
+          </ul>
+
+          <h3>Stap 2: Vul de ESG-Analyse In</h3>
+          <p>
+            Ga door de tabbladen 'Ecologisch', 'Sociaal' en 'Bestuur'. Voor elk
+            onderwerp vul je de twee velden in:
+          </p>
+          <h4>1. Claim (Wat zegt het bedrijf?)</h4>
+          <p>
+            Vat hier de officiële claims, doelen en ambities van het bedrijf
+            samen. Gebruik hun eigen woorden uit de jaarverslagen en rapporten.
+            Focus op concrete, meetbare beloftes.
+          </p>
+          <ul>
+            <li>
+              <strong>Voorbeeld (Klimaat):</strong> "Bedrijf X claimt 'Net-Zero'
+              te zijn in 2050 en heeft een door SBTi-gevalideerd doel om de
+              absolute Scope 1 & 2 emissies met 50% te reduceren in 2030."
+            </li>
+          </ul>
+          <h4>2. Controverse & Analyse (Wat is de realiteit?)</h4>
+          <p>
+            Hier doe je kritisch onderzoek. Ga op zoek naar bewijs dat de claims
+            van het bedrijf tegenspreekt of nuanceert. Het doel is de
+            <strong>'Say-Do Gap'</strong> te vinden: de kloof tussen wat een
+            bedrijf zegt en wat het daadwerkelijk doet.
+          </p>
+          <h4>Bronnen voor kritische data:</h4>
+          <ul>
+            <li>
+              <strong>NGO-rapporten:</strong> Zoek naar rapporten van
+              organisaties als Greenpeace, Milieudefensie, Amnesty
+              International, of gespecialiseerde groepen zoals Mighty Earth,
+              ClientEarth, of de Plastic Soup Foundation. Gebruik zoektermen als
+              <code>"[bedrijfsnaam] [onderwerp] report"</code>.
+            </li>
+            <li>
+              <strong>Nieuwsarchieven:</strong> Zoek in betrouwbare
+              nieuwsbronnen (bv. FD, NRC, The Guardian, Reuters) naar artikelen
+              over rechtszaken, controverses of kritiek op het bedrijf.
+            </li>
+            <li>
+              <strong>Wetenschappelijke artikelen:</strong> Voor diepgaande
+              analyses over bijvoorbeeld de effectiviteit van
+              certificeringsschema's.
+            </li>
+          </ul>
+
+          <h3>Stap 3: Kwantificeer de Verborgen Klimaatkosten</h3>
+          <p>
+            Op het 'Ecologisch' tabblad vind je de calculator voor verborgen
+            klimaatkosten. Dit is een krachtige manier om de omvang van de
+            klimaatschade tastbaar te maken.
+          </p>
+          <ol class="list-decimal ml-6 space-y-2 text-slate-600">
+            <li>
+              <strong>Vind de totale BKG-uitstoot:</strong> Zoek in het
+              duurzaamheidsverslag naar de totale broeikasgasuitstoot (GHG
+              emissions). Je hebt het totaal van Scope 1, 2 en 3 nodig,
+              uitgedrukt in tonnen of miljoenen tonnen $CO_2$-equivalent
+              ($CO_2e$).
+            </li>
+            <li>
+              <strong>Voer de uitstoot in:</strong> Vul dit getal in bij 'Totale
+              BKG-uitstoot (Mt CO₂e)'. Let op: 1 miljoen ton = 1 Mt.
+            </li>
+            <li>
+              <strong>Gebruik de Social Cost of Carbon (SCC):</strong> De tool
+              gebruikt een standaardwaarde van $190 per ton, gebaseerd op de
+              schatting van de Amerikaanse EPA. Dit is een wetenschappelijk
+              onderbouwde schatting van de maatschappelijke schade per ton
+              $CO_2$.
+            </li>
+            <li>
+              <strong>Analyseer het resultaat:</strong> De tool berekent de
+              totale jaarlijkse klimaatschade in dollars. Vergelijk dit bedrag
+              met de jaarlijkse nettowinst van het bedrijf (te vinden in het
+              financieel jaarverslag). Wat zegt deze vergelijking over de ware
+              winstgevendheid van het bedrijf als het zijn eigen vervuiling zou
+              moeten betalen?
+            </li>
+          </ol>
+
+          <h3>Stap 4: Conclusie en Reflectie</h3>
+          <p>
+            Vat je bevindingen samen. Wat zijn de belangrijkste verborgen
+            kosten? Waar is de 'Say-Do Gap' het grootst? Is het bedrijf zich
+            bewust van de risico's en neemt het effectieve maatregelen, of
+            vertrouwt het op zwakke mechanismen zoals ineffectieve audits?
+            Gebruik je analyse om een onderbouwd oordeel te vellen over de
+            duurzaamheidsprestaties van het bedrijf, voorbij de glanzende
+            rapporten en hoge ESG-scores.
+          </p>
+        </div>
+
+        <!-- Environmental Tab -->
+        <div
+          id="content-environmental"
+          class="hidden"
+        >
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Hidden Climate Costs Calculation -->
+            <div
+              class="lg:col-span-2 bg-blue-50 border-2 border-blue-200 rounded-xl p-6"
+            >
+              <h3 class="text-2xl font-bold text-blue-900 mb-2 text-center">
+                Verborgen Klimaatkosten Calculator
+              </h3>
+              <div
+                class="grid grid-cols-1 md:grid-cols-5 items-center justify-center gap-4 text-center"
+              >
+                <div class="p-4 bg-white rounded-lg shadow">
+                  <label
+                    for="emissions"
+                    class="text-sm text-slate-500 block"
+                    >Totale BKG-uitstoot (Mt CO₂e)</label
+                  >
+                  <input
+                    type="number"
+                    id="emissions"
+                    class="analysis-input text-center text-lg font-semibold mt-1"
+                    placeholder="bv. 66.9"
+                  />
+                </div>
+                <p class="text-blue-600 text-3xl font-semibold">&times;</p>
+                <div class="p-4 bg-white rounded-lg shadow">
+                  <label
+                    for="scc"
+                    class="text-sm text-slate-500 block"
+                    >Social Cost of Carbon ($/ton)</label
+                  >
+                  <input
+                    type="number"
+                    id="scc"
+                    class="analysis-input text-center text-lg font-semibold mt-1"
+                    value="190"
+                  />
+                </div>
+                <p class="text-blue-600 text-3xl font-semibold">=</p>
+                <div class="p-4 bg-blue-100 rounded-lg shadow-inner">
+                  <p class="text-sm text-blue-800">Jaarlijkse Klimaatschade</p>
+                  <p
+                    id="climateCostResult"
+                    class="text-blue-900 text-2xl md:text-3xl font-bold mt-1"
+                  >
+                    $0 Miljard
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Climate Impact Card -->
+            <div class="say-do-gap-card p-6">
+              <h4 class="text-xl font-bold text-slate-800 mb-4">
+                Klimaatimpact
+              </h4>
+              <div class="space-y-4">
+                <div>
+                  <h5
+                    class="font-semibold text-green-700 mb-1 flex items-center"
+                  >
+                    <i class="fa-solid fa-bullhorn mr-2"></i>Claim (Wat zegt het
+                    bedrijf?)
+                  </h5>
+                  <textarea
+                    id="claim-climate"
+                    class="analysis-input"
+                    rows="4"
+                    placeholder="Vat hier de klimaatdoelen en claims van het bedrijf samen..."
+                  ></textarea>
+                </div>
+                <hr />
+                <div>
+                  <h5 class="font-semibold text-red-700 mb-1 flex items-center">
+                    <i class="fa-solid fa-magnifying-glass mr-2"></i>Controverse
+                    & Analyse (Wat is de realiteit?)
+                  </h5>
+                  <textarea
+                    id="controverse-climate"
+                    class="analysis-input"
+                    rows="6"
+                    placeholder="Beschrijf hier de 'Say-Do Gap'. Stijgen de emissies? Wordt methaan genegeerd? Wat zeggen NGO's?"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Plastic Pollution Card -->
+            <div class="say-do-gap-card p-6">
+              <h4 class="text-xl font-bold text-slate-800 mb-4">
+                Plasticvervuiling
+              </h4>
+              <div class="space-y-4">
+                <div>
+                  <h5
+                    class="font-semibold text-green-700 mb-1 flex items-center"
+                  >
+                    <i class="fa-solid fa-bullhorn mr-2"></i>Claim
+                  </h5>
+                  <textarea
+                    id="claim-plastic"
+                    class="analysis-input"
+                    rows="4"
+                    placeholder="Wat belooft het bedrijf over plasticreductie en recycling?"
+                  ></textarea>
+                </div>
+                <hr />
+                <div>
+                  <h5 class="font-semibold text-red-700 mb-1 flex items-center">
+                    <i class="fa-solid fa-magnifying-glass mr-2"></i>Controverse
+                    & Analyse
+                  </h5>
+                  <textarea
+                    id="controverse-plastic"
+                    class="analysis-input"
+                    rows="6"
+                    placeholder="Is het bedrijf transparant over zijn plastic voetafdruk? Wat is de kritiek van bv. de Plastic Soup Foundation?"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Deforestation Card -->
+            <div class="say-do-gap-card p-6">
+              <h4 class="text-xl font-bold text-slate-800 mb-4">
+                Natuur & Ontbossing
+              </h4>
+              <div class="space-y-4">
+                <div>
+                  <h5
+                    class="font-semibold text-green-700 mb-1 flex items-center"
+                  >
+                    <i class="fa-solid fa-bullhorn mr-2"></i>Claim
+                  </h5>
+                  <textarea
+                    id="claim-deforestation"
+                    class="analysis-input"
+                    rows="4"
+                    placeholder="Wat is het beleid tegen ontbossing voor soja, palmolie, etc.?"
+                  ></textarea>
+                </div>
+                <hr />
+                <div>
+                  <h5 class="font-semibold text-red-700 mb-1 flex items-center">
+                    <i class="fa-solid fa-magnifying-glass mr-2"></i>Controverse
+                    & Analyse
+                  </h5>
+                  <textarea
+                    id="controverse-deforestation"
+                    class="analysis-input"
+                    rows="6"
+                    placeholder="Zijn eerdere beloftes gehaald? Hoe effectief zijn de gebruikte certificaten? Wat zegt bv. Greenpeace?"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Social Tab -->
+        <div
+          id="content-social"
+          class="hidden"
+        >
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Human Rights Card -->
+            <div class="say-do-gap-card p-6">
+              <h4 class="text-xl font-bold text-slate-800 mb-4">
+                Mensenrechten Toeleveringsketen
+              </h4>
+              <div class="space-y-4">
+                <div>
+                  <h5
+                    class="font-semibold text-green-700 mb-1 flex items-center"
+                  >
+                    <i class="fa-solid fa-bullhorn mr-2"></i>Claim
+                  </h5>
+                  <textarea
+                    id="claim-humanrights"
+                    class="analysis-input"
+                    rows="4"
+                    placeholder="Wat zegt het bedrijf over het waarborgen van mensenrechten? Welke due diligence processen claimen ze te hebben?"
+                  ></textarea>
+                </div>
+                <hr />
+                <div>
+                  <h5 class="font-semibold text-red-700 mb-1 flex items-center">
+                    <i class="fa-solid fa-magnifying-glass mr-2"></i>Controverse
+                    & Analyse
+                  </h5>
+                  <textarea
+                    id="controverse-humanrights"
+                    class="analysis-input"
+                    rows="6"
+                    placeholder="Zijn er klachten of rapporten over misstanden (dwangarbeid, kinderarbeid, lage lonen)? Hoe effectief zijn de audits?"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+            <!-- Labor Rights Card -->
+            <div class="say-do-gap-card p-6">
+              <h4 class="text-xl font-bold text-slate-800 mb-4">
+                Arbeidsrechten Eigen Personeel
+              </h4>
+              <div class="space-y-4">
+                <div>
+                  <h5
+                    class="font-semibold text-green-700 mb-1 flex items-center"
+                  >
+                    <i class="fa-solid fa-bullhorn mr-2"></i>Claim
+                  </h5>
+                  <textarea
+                    id="claim-labor"
+                    class="analysis-input"
+                    rows="4"
+                    placeholder="Wat claimt het bedrijf over lonen, veiligheid, diversiteit en inclusie voor het eigen personeel?"
+                  ></textarea>
+                </div>
+                <hr />
+                <div>
+                  <h5 class="font-semibold text-red-700 mb-1 flex items-center">
+                    <i class="fa-solid fa-magnifying-glass mr-2"></i>Controverse
+                    & Analyse
+                  </h5>
+                  <textarea
+                    id="controverse-labor"
+                    class="analysis-input"
+                    rows="6"
+                    placeholder="Betaalt het bedrijf een leefbaar loon? Wat is de genderloonkloof? Zijn er veel ongevallen? Wat zeggen vakbonden?"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Governance Tab -->
+        <div
+          id="content-governance"
+          class="hidden"
+        >
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Due Diligence Card -->
+            <div class="say-do-gap-card p-6">
+              <h4 class="text-xl font-bold text-slate-800 mb-4">
+                Risicomanagement & Beloning
+              </h4>
+              <div class="space-y-4">
+                <div>
+                  <h5
+                    class="font-semibold text-green-700 mb-1 flex items-center"
+                  >
+                    <i class="fa-solid fa-bullhorn mr-2"></i>Claim
+                  </h5>
+                  <textarea
+                    id="claim-governance"
+                    class="analysis-input"
+                    rows="4"
+                    placeholder="Hoe zegt het bedrijf ESG-risico's te managen? Is de beloning van de top gekoppeld aan duurzaamheidsdoelen?"
+                  ></textarea>
+                </div>
+                <hr />
+                <div>
+                  <h5 class="font-semibold text-red-700 mb-1 flex items-center">
+                    <i class="fa-solid fa-magnifying-glass mr-2"></i>Controverse
+                    & Analyse
+                  </h5>
+                  <textarea
+                    id="controverse-governance"
+                    class="analysis-input"
+                    rows="6"
+                    placeholder="Worden ESG-risico's echt als materieel gezien? Is de beloning gekoppeld aan absolute, ambitieuze doelen, of aan vage KPI's?"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+            <!-- Transparency Card -->
+            <div class="say-do-gap-card p-6">
+              <h4 class="text-xl font-bold text-slate-800 mb-4">
+                Transparantie & Lobby
+              </h4>
+              <div class="space-y-4">
+                <div>
+                  <h5
+                    class="font-semibold text-green-700 mb-1 flex items-center"
+                  >
+                    <i class="fa-solid fa-bullhorn mr-2"></i>Claim
+                  </h5>
+                  <textarea
+                    id="claim-transparency"
+                    class="analysis-input"
+                    rows="4"
+                    placeholder="Hoe transparant is het bedrijf over zijn data en lobby-activiteiten?"
+                  ></textarea>
+                </div>
+                <hr />
+                <div>
+                  <h5 class="font-semibold text-red-700 mb-1 flex items-center">
+                    <i class="fa-solid fa-magnifying-glass mr-2"></i>Controverse
+                    & Analyse
+                  </h5>
+                  <textarea
+                    id="controverse-transparency"
+                    class="analysis-input"
+                    rows="6"
+                    placeholder="Is de ESG-data onafhankelijk ge-audit? Zijn de lobby-activiteiten in strijd met de duurzaamheidsclaims?"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      // --- DOM Elements ---
+      const tabs = {
+        manual: {
+          button: document.getElementById("tab-manual"),
+          content: document.getElementById("content-manual"),
+        },
+        environmental: {
+          button: document.getElementById("tab-environmental"),
+          content: document.getElementById("content-environmental"),
+        },
+        social: {
+          button: document.getElementById("tab-social"),
+          content: document.getElementById("content-social"),
+        },
+        governance: {
+          button: document.getElementById("tab-governance"),
+          content: document.getElementById("content-governance"),
+        },
+      };
+
+      const inputs = {
+        companyName: document.getElementById("companyName"),
+        emissions: document.getElementById("emissions"),
+        scc: document.getElementById("scc"),
+        climateCostResult: document.getElementById("climateCostResult"),
+        // Textareas
+        "claim-climate": document.getElementById("claim-climate"),
+        "controverse-climate": document.getElementById("controverse-climate"),
+        "claim-plastic": document.getElementById("claim-plastic"),
+        "controverse-plastic": document.getElementById("controverse-plastic"),
+        "claim-deforestation": document.getElementById("claim-deforestation"),
+        "controverse-deforestation": document.getElementById(
+          "controverse-deforestation"
+        ),
+        "claim-humanrights": document.getElementById("claim-humanrights"),
+        "controverse-humanrights": document.getElementById(
+          "controverse-humanrights"
+        ),
+        "claim-labor": document.getElementById("claim-labor"),
+        "controverse-labor": document.getElementById("controverse-labor"),
+        "claim-governance": document.getElementById("claim-governance"),
+        "controverse-governance": document.getElementById(
+          "controverse-governance"
+        ),
+        "claim-transparency": document.getElementById("claim-transparency"),
+        "controverse-transparency": document.getElementById(
+          "controverse-transparency"
+        ),
+      };
+
+      const storageKey = "companyAnalysisData";
+
+      // --- Example Data ---
+      const aholdExampleData = {
+        companyName: "Ahold Delhaize",
+        emissions: "66.9",
+        scc: "190",
+        "claim-climate":
+          "Ahold Delhaize profileert zich als een klimaatleider met ambitieuze, door het SBTi gevalideerde doelstellingen: een reductie van 50% van de eigen emissies (Scope 1 en 2) in 2030, en een Net-Zero doelstelling voor de gehele waardeketen in 2050.",
+        "controverse-climate":
+          "Ondanks de doelen, zijn de emissies in de meest materiële categorie – Scope 3 FLAG (Forest, Land and Agriculture) – sinds 2020 met 9,9% gestegen. Het bedrijf rapporteert niet apart over methaanuitstoot en heeft er geen specifieke reductiedoelen voor, terwijl dit 44% van de FLAG-emissies vertegenwoordigt. De 'Say-Do Gap' is dat de claim van leiderschap wordt ondermijnd door stijgende emissies in de meest impactvolle categorie.",
+        "claim-plastic":
+          "Ahold Delhaize heeft doelen om het gebruik van nieuw (virgin) plastic te verminderen en de recyclebaarheid te verhogen.",
+        "controverse-plastic":
+          "Klacht bij AFM (ClientEarth/Plastic Soup Foundation) wegens misleiden van investeerders. Het bedrijf is niet transparant over zijn totale plastic voetafdruk en rapporteert de daaraan verbonden financiële risico's niet. 82% van Albert Heijn huismerkproducten is in plastic verpakt. Dit is een governance-falen.",
+        "claim-deforestation":
+          "Streeft naar 100% ontbossingsvrije toeleveringsketens voor huismerkproducten in 2025 via certificering voor risicogrondstoffen zoals palmolie en soja.",
+        "controverse-deforestation":
+          "Eerdere deadlines (2020) zijn niet gehaald. Het bedrijf vertrouwt op bekritiseerde certificeringsschema's (zoals RTRS voor soja) die door experts als ineffectief en een vorm van 'greenwashing' worden gezien. De methode is onvoldoende om de claim te garanderen.",
+        "claim-humanrights":
+          "Het bedrijf stelt de mensenrechten serieus te nemen en due diligence uit te voeren via audits en 'Standards of Engagement'. Na een klacht is een Human Rights Impact Assessment (HRIA) aangekondigd.",
+        "controverse-humanrights":
+          "Formele OESO-klacht (Migrant Justice) documenteert 'ernstige en systemische mensenrechtenschendingen' bij Amerikaanse zuivelleveranciers: excessieve werkweken, lonen onder het minimum, onveilige huisvesting, en indicatoren van dwangarbeid. Het officiële klachtenmechanisme is ontoegankelijk en ineffectief. De due diligence heeft gefaald.",
+        "claim-labor":
+          "Het bedrijf claimt een goede werkgever te zijn met aandacht voor eerlijke lonen, veiligheid en diversiteit voor het eigen personeel.",
+        "controverse-labor":
+          "Analyseer hier de praktijk: wordt een leefbaar loon betaald aan alle werknemers? Wat is de onverklaarde genderloonkloof? Wat is het aantal en de frequentie van arbeidsongevallen? Wat zeggen vakbonden en werknemers over de werkomstandigheden?",
+        "claim-governance":
+          "Het bedrijf claimt robuuste processen voor ESG-risicomanagement te hebben en koppelt de beloning van de top aan duurzaamheidsdoelen.",
+        "controverse-governance":
+          "De diverse controverses (klimaat, plastic, mensenrechten) wijzen op een fundamenteel falen in het risicomanagement. Het bedrijf vertrouwt op ineffectieve mechanismen (audits, zwakke certificering). De koppeling van beloning aan ESG-doelen is vaak onduidelijk en niet gekoppeld aan absolute, wetenschappelijke doelen.",
+        "claim-transparency":
+          "Het bedrijf streeft naar transparante rapportage over zijn duurzaamheidsprestaties en lobby-activiteiten.",
+        "controverse-transparency":
+          "Het niet-rapporteren van de plastic voetafdruk is een voorbeeld van een gebrek aan transparantie. Onderzoek of de lobby-activiteiten in strijd zijn met de publieke duurzaamheidsdoelen. Is de ESG-data onafhankelijk ge-audit met 'reasonable assurance'?",
+      };
+
+      // --- Functions ---
+
+      /**
+       * Switches the active tab.
+       * @param {string} tabName - The name of the tab to show.
+       */
+      function showTab(tabName) {
+        for (const key in tabs) {
+          const isSelectedTab = key === tabName;
+          tabs[key].button.classList.toggle("tab-active", isSelectedTab);
+          tabs[key].button.classList.toggle("tab-inactive", !isSelectedTab);
+          tabs[key].content.classList.toggle("hidden", !isSelectedTab);
+        }
+      }
+
+      /**
+       * Calculates the hidden climate cost and updates the display.
+       */
+      function calculateClimateCost() {
+        const emissionsMt = parseFloat(inputs.emissions.value) || 0;
+        const sccPerTon = parseFloat(inputs.scc.value) || 0;
+
+        const totalCost = emissionsMt * 1000000 * sccPerTon;
+
+        let displayValue;
+        if (totalCost >= 1e9) {
+          displayValue = `$${(totalCost / 1e9).toFixed(1)} Miljard`;
+        } else if (totalCost >= 1e6) {
+          displayValue = `$${(totalCost / 1e6).toFixed(1)} Miljoen`;
+        } else {
+          displayValue = `$${totalCost.toLocaleString("nl-NL")}`;
+        }
+
+        inputs.climateCostResult.textContent = displayValue;
+      }
+
+      /**
+       * Saves all input data to localStorage.
+       */
+      function saveData() {
+        const data = {};
+        for (const key in inputs) {
+          if (key !== "climateCostResult") {
+            data[key] = inputs[key].value;
+          }
+        }
+        localStorage.setItem(storageKey, JSON.stringify(data));
+      }
+
+      /**
+       * Loads data from localStorage and populates the form.
+       */
+      function loadData() {
+        const savedData = localStorage.getItem(storageKey);
+        if (savedData) {
+          const data = JSON.parse(savedData);
+          for (const key in data) {
+            if (inputs[key]) {
+              inputs[key].value = data[key];
+            }
+          }
+          calculateClimateCost(); // Recalculate on load
+        }
+      }
+
+      /**
+       * Resets all data in the form and localStorage.
+       */
+      function resetData() {
+        if (
+          confirm(
+            "Weet je zeker dat je alle ingevoerde data wilt wissen? Deze actie kan niet ongedaan worden gemaakt."
+          )
+        ) {
+          localStorage.removeItem(storageKey);
+          // Reset all input fields
+          for (const key in inputs) {
+            if (
+              inputs[key].tagName === "TEXTAREA" ||
+              inputs[key].tagName === "INPUT"
+            ) {
+              if (key !== "scc") {
+                // Don't reset the SCC value
+                inputs[key].value = "";
+              }
+            }
+          }
+          // Manually reset SCC if it was cleared
+          inputs.scc.value = "190";
+          calculateClimateCost();
+          alert("Analyse is gereset.");
+        }
+      }
+
+      /**
+       * Loads the Ahold Delhaize example data into the form.
+       */
+      function loadExampleData() {
+        if (
+          confirm(
+            "Dit zal alle huidige data overschrijven met het Ahold Delhaize voorbeeld. Weet je het zeker?"
+          )
+        ) {
+          for (const key in aholdExampleData) {
+            if (inputs[key]) {
+              inputs[key].value = aholdExampleData[key];
+            }
+          }
+          calculateClimateCost();
+          saveData(); // Save the example data so it persists
+          alert("Voorbeelddata voor Ahold Delhaize is geladen.");
+          showTab("environmental"); // Switch to a relevant tab
+        }
+      }
+
+      // --- Event Listeners ---
+
+      // Load data when the page is ready
+      document.addEventListener("DOMContentLoaded", () => {
+        loadData();
+        showTab("manual"); // Start on the manual tab
+      });
+
+      // Add event listeners to all input fields to save data on change
+      for (const key in inputs) {
+        if (key !== "climateCostResult") {
+          inputs[key].addEventListener("keyup", saveData);
+          inputs[key].addEventListener("change", saveData); // For number inputs
+        }
+      }
+
+      // Add specific listeners for the calculator
+      inputs.emissions.addEventListener("keyup", calculateClimateCost);
+      inputs.emissions.addEventListener("change", calculateClimateCost);
+      inputs.scc.addEventListener("keyup", calculateClimateCost);
+      inputs.scc.addEventListener("change", calculateClimateCost);
+    </script>
+  </body>
+</html>
