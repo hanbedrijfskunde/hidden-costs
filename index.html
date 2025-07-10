@@ -32,91 +32,11 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
 
-    <style>
-      /* Custom styles to complement Tailwind */
-      body {
-        font-family: "Inter", sans-serif;
-        background-color: #f8fafc; /* slate-50 */
-      }
-      .tab-active {
-        border-bottom-color: #2563eb; /* blue-600 */
-        color: #2563eb;
-        font-weight: 600;
-      }
-      .tab-inactive {
-        border-bottom-color: transparent;
-        color: #475569; /* slate-600 */
-      }
-      .say-do-gap-card {
-        background-color: white;
-        border-radius: 0.75rem;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1),
-          0 2px 4px -2px rgb(0 0 0 / 0.1);
-      }
-      .pill {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-      }
-      .pill-red {
-        background-color: #fee2e2;
-        color: #b91c1c;
-      }
-      .pill-green {
-        background-color: #dcfce7;
-        color: #166534;
-      }
-
-      /* Styles for input fields */
-      textarea.analysis-input,
-      input.analysis-input {
-        width: 100%;
-        border-radius: 0.5rem;
-        border: 1px solid #cbd5e1; /* slate-300 */
-        padding: 0.75rem;
-        font-size: 0.875rem;
-        color: #334155; /* slate-700 */
-        transition: border-color 0.2s, box-shadow 0.2s;
-      }
-      textarea.analysis-input:focus,
-      input.analysis-input:focus {
-        outline: none;
-        border-color: #2563eb; /* blue-600 */
-        box-shadow: 0 0 0 2px #bfdbfe; /* blue-200 */
-      }
-      .manual-content h3 {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1e293b; /* slate-800 */
-        margin-top: 2rem;
-        margin-bottom: 1rem;
-        border-bottom: 2px solid #e2e8f0; /* slate-200 */
-        padding-bottom: 0.5rem;
-      }
-      .manual-content h4 {
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: #334155; /* slate-700 */
-        margin-top: 1.5rem;
-        margin-bottom: 0.5rem;
-      }
-      .manual-content ul {
-        list-style-type: disc;
-        margin-left: 1.5rem;
-        space-y: 0.5rem;
-        color: #475569; /* slate-600 */
-      }
-      .manual-content code {
-        background-color: #e2e8f0;
-        padding: 0.2rem 0.4rem;
-        border-radius: 0.25rem;
-        font-family: monospace;
-        font-size: 0.875rem;
-      }
-    </style>
+    <!-- Custom Styles -->
+    <link
+      rel="stylesheet"
+      href="styles.css"
+    />
   </head>
   <body class="text-slate-800">
     <!-- Main Container -->
@@ -159,6 +79,18 @@
               <i class="fa-solid fa-file-import mr-2"></i>Laad Voorbeeld
             </button>
             <button
+              onclick="exportToCSV()"
+              class="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+            >
+              <i class="fa-solid fa-download mr-2"></i>Export CSV
+            </button>
+            <button
+              onclick="triggerImportCSV()"
+              class="w-full sm:w-auto bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+            >
+              <i class="fa-solid fa-upload mr-2"></i>Import CSV
+            </button>
+            <button
               onclick="resetData()"
               class="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors"
             >
@@ -170,6 +102,15 @@
           Alle ingevoerde data wordt automatisch lokaal in je browser
           opgeslagen.
         </p>
+
+        <!-- Hidden file input for CSV import -->
+        <input
+          type="file"
+          id="csvFileInput"
+          accept=".csv"
+          style="display: none"
+          onchange="importFromCSV(event)"
+        />
       </div>
 
       <!-- Tab Navigation -->
@@ -664,230 +605,7 @@
       </main>
     </div>
 
-    <script>
-      // --- DOM Elements ---
-      const tabs = {
-        manual: {
-          button: document.getElementById("tab-manual"),
-          content: document.getElementById("content-manual"),
-        },
-        environmental: {
-          button: document.getElementById("tab-environmental"),
-          content: document.getElementById("content-environmental"),
-        },
-        social: {
-          button: document.getElementById("tab-social"),
-          content: document.getElementById("content-social"),
-        },
-        governance: {
-          button: document.getElementById("tab-governance"),
-          content: document.getElementById("content-governance"),
-        },
-      };
-
-      const inputs = {
-        companyName: document.getElementById("companyName"),
-        emissions: document.getElementById("emissions"),
-        scc: document.getElementById("scc"),
-        climateCostResult: document.getElementById("climateCostResult"),
-        // Textareas
-        "claim-climate": document.getElementById("claim-climate"),
-        "controverse-climate": document.getElementById("controverse-climate"),
-        "claim-plastic": document.getElementById("claim-plastic"),
-        "controverse-plastic": document.getElementById("controverse-plastic"),
-        "claim-deforestation": document.getElementById("claim-deforestation"),
-        "controverse-deforestation": document.getElementById(
-          "controverse-deforestation"
-        ),
-        "claim-humanrights": document.getElementById("claim-humanrights"),
-        "controverse-humanrights": document.getElementById(
-          "controverse-humanrights"
-        ),
-        "claim-labor": document.getElementById("claim-labor"),
-        "controverse-labor": document.getElementById("controverse-labor"),
-        "claim-governance": document.getElementById("claim-governance"),
-        "controverse-governance": document.getElementById(
-          "controverse-governance"
-        ),
-        "claim-transparency": document.getElementById("claim-transparency"),
-        "controverse-transparency": document.getElementById(
-          "controverse-transparency"
-        ),
-      };
-
-      const storageKey = "companyAnalysisData";
-
-      // --- Example Data ---
-      const aholdExampleData = {
-        companyName: "Ahold Delhaize",
-        emissions: "66.9",
-        scc: "190",
-        "claim-climate":
-          "Ahold Delhaize profileert zich als een klimaatleider met ambitieuze, door het SBTi gevalideerde doelstellingen: een reductie van 50% van de eigen emissies (Scope 1 en 2) in 2030, en een Net-Zero doelstelling voor de gehele waardeketen in 2050.",
-        "controverse-climate":
-          "Ondanks de doelen, zijn de emissies in de meest materiële categorie – Scope 3 FLAG (Forest, Land and Agriculture) – sinds 2020 met 9,9% gestegen. Het bedrijf rapporteert niet apart over methaanuitstoot en heeft er geen specifieke reductiedoelen voor, terwijl dit 44% van de FLAG-emissies vertegenwoordigt. De 'Say-Do Gap' is dat de claim van leiderschap wordt ondermijnd door stijgende emissies in de meest impactvolle categorie.",
-        "claim-plastic":
-          "Ahold Delhaize heeft doelen om het gebruik van nieuw (virgin) plastic te verminderen en de recyclebaarheid te verhogen.",
-        "controverse-plastic":
-          "Klacht bij AFM (ClientEarth/Plastic Soup Foundation) wegens misleiden van investeerders. Het bedrijf is niet transparant over zijn totale plastic voetafdruk en rapporteert de daaraan verbonden financiële risico's niet. 82% van Albert Heijn huismerkproducten is in plastic verpakt. Dit is een governance-falen.",
-        "claim-deforestation":
-          "Streeft naar 100% ontbossingsvrije toeleveringsketens voor huismerkproducten in 2025 via certificering voor risicogrondstoffen zoals palmolie en soja.",
-        "controverse-deforestation":
-          "Eerdere deadlines (2020) zijn niet gehaald. Het bedrijf vertrouwt op bekritiseerde certificeringsschema's (zoals RTRS voor soja) die door experts als ineffectief en een vorm van 'greenwashing' worden gezien. De methode is onvoldoende om de claim te garanderen.",
-        "claim-humanrights":
-          "Het bedrijf stelt de mensenrechten serieus te nemen en due diligence uit te voeren via audits en 'Standards of Engagement'. Na een klacht is een Human Rights Impact Assessment (HRIA) aangekondigd.",
-        "controverse-humanrights":
-          "Formele OESO-klacht (Migrant Justice) documenteert 'ernstige en systemische mensenrechtenschendingen' bij Amerikaanse zuivelleveranciers: excessieve werkweken, lonen onder het minimum, onveilige huisvesting, en indicatoren van dwangarbeid. Het officiële klachtenmechanisme is ontoegankelijk en ineffectief. De due diligence heeft gefaald.",
-        "claim-labor":
-          "Het bedrijf claimt een goede werkgever te zijn met aandacht voor eerlijke lonen, veiligheid en diversiteit voor het eigen personeel.",
-        "controverse-labor":
-          "Analyseer hier de praktijk: wordt een leefbaar loon betaald aan alle werknemers? Wat is de onverklaarde genderloonkloof? Wat is het aantal en de frequentie van arbeidsongevallen? Wat zeggen vakbonden en werknemers over de werkomstandigheden?",
-        "claim-governance":
-          "Het bedrijf claimt robuuste processen voor ESG-risicomanagement te hebben en koppelt de beloning van de top aan duurzaamheidsdoelen.",
-        "controverse-governance":
-          "De diverse controverses (klimaat, plastic, mensenrechten) wijzen op een fundamenteel falen in het risicomanagement. Het bedrijf vertrouwt op ineffectieve mechanismen (audits, zwakke certificering). De koppeling van beloning aan ESG-doelen is vaak onduidelijk en niet gekoppeld aan absolute, wetenschappelijke doelen.",
-        "claim-transparency":
-          "Het bedrijf streeft naar transparante rapportage over zijn duurzaamheidsprestaties en lobby-activiteiten.",
-        "controverse-transparency":
-          "Het niet-rapporteren van de plastic voetafdruk is een voorbeeld van een gebrek aan transparantie. Onderzoek of de lobby-activiteiten in strijd zijn met de publieke duurzaamheidsdoelen. Is de ESG-data onafhankelijk ge-audit met 'reasonable assurance'?",
-      };
-
-      // --- Functions ---
-
-      /**
-       * Switches the active tab.
-       * @param {string} tabName - The name of the tab to show.
-       */
-      function showTab(tabName) {
-        for (const key in tabs) {
-          const isSelectedTab = key === tabName;
-          tabs[key].button.classList.toggle("tab-active", isSelectedTab);
-          tabs[key].button.classList.toggle("tab-inactive", !isSelectedTab);
-          tabs[key].content.classList.toggle("hidden", !isSelectedTab);
-        }
-      }
-
-      /**
-       * Calculates the hidden climate cost and updates the display.
-       */
-      function calculateClimateCost() {
-        const emissionsMt = parseFloat(inputs.emissions.value) || 0;
-        const sccPerTon = parseFloat(inputs.scc.value) || 0;
-
-        const totalCost = emissionsMt * 1000000 * sccPerTon;
-
-        let displayValue;
-        if (totalCost >= 1e9) {
-          displayValue = `$${(totalCost / 1e9).toFixed(1)} Miljard`;
-        } else if (totalCost >= 1e6) {
-          displayValue = `$${(totalCost / 1e6).toFixed(1)} Miljoen`;
-        } else {
-          displayValue = `$${totalCost.toLocaleString("nl-NL")}`;
-        }
-
-        inputs.climateCostResult.textContent = displayValue;
-      }
-
-      /**
-       * Saves all input data to localStorage.
-       */
-      function saveData() {
-        const data = {};
-        for (const key in inputs) {
-          if (key !== "climateCostResult") {
-            data[key] = inputs[key].value;
-          }
-        }
-        localStorage.setItem(storageKey, JSON.stringify(data));
-      }
-
-      /**
-       * Loads data from localStorage and populates the form.
-       */
-      function loadData() {
-        const savedData = localStorage.getItem(storageKey);
-        if (savedData) {
-          const data = JSON.parse(savedData);
-          for (const key in data) {
-            if (inputs[key]) {
-              inputs[key].value = data[key];
-            }
-          }
-          calculateClimateCost(); // Recalculate on load
-        }
-      }
-
-      /**
-       * Resets all data in the form and localStorage.
-       */
-      function resetData() {
-        if (
-          confirm(
-            "Weet je zeker dat je alle ingevoerde data wilt wissen? Deze actie kan niet ongedaan worden gemaakt."
-          )
-        ) {
-          localStorage.removeItem(storageKey);
-          // Reset all input fields
-          for (const key in inputs) {
-            if (
-              inputs[key].tagName === "TEXTAREA" ||
-              inputs[key].tagName === "INPUT"
-            ) {
-              if (key !== "scc") {
-                // Don't reset the SCC value
-                inputs[key].value = "";
-              }
-            }
-          }
-          // Manually reset SCC if it was cleared
-          inputs.scc.value = "190";
-          calculateClimateCost();
-          alert("Analyse is gereset.");
-        }
-      }
-
-      /**
-       * Loads the Ahold Delhaize example data into the form.
-       */
-      function loadExampleData() {
-        if (
-          confirm(
-            "Dit zal alle huidige data overschrijven met het Ahold Delhaize voorbeeld. Weet je het zeker?"
-          )
-        ) {
-          for (const key in aholdExampleData) {
-            if (inputs[key]) {
-              inputs[key].value = aholdExampleData[key];
-            }
-          }
-          calculateClimateCost();
-          saveData(); // Save the example data so it persists
-          alert("Voorbeelddata voor Ahold Delhaize is geladen.");
-          showTab("environmental"); // Switch to a relevant tab
-        }
-      }
-
-      // --- Event Listeners ---
-
-      // Load data when the page is ready
-      document.addEventListener("DOMContentLoaded", () => {
-        loadData();
-        showTab("manual"); // Start on the manual tab
-      });
-
-      // Add event listeners to all input fields to save data on change
-      for (const key in inputs) {
-        if (key !== "climateCostResult") {
-          inputs[key].addEventListener("keyup", saveData);
-          inputs[key].addEventListener("change", saveData); // For number inputs
-        }
-      }
-
-      // Add specific listeners for the calculator
-      inputs.emissions.addEventListener("keyup", calculateClimateCost);
-      inputs.emissions.addEventListener("change", calculateClimateCost);
-      inputs.scc.addEventListener("keyup", calculateClimateCost);
-      inputs.scc.addEventListener("change", calculateClimateCost);
-    </script>
+    <!-- JavaScript -->
+    <script src="script.js"></script>
   </body>
 </html>
